@@ -1,0 +1,168 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+
+		<link href="https://dmb.fxdms.net/dmb/css/bootstrap.css" rel="stylesheet" media="screen">
+		<link rel="stylesheet" href="https://dmb.fxdms.net/dmb/css/jquery.sidr.dark.css">
+		<link href="https://dmb.fxdms.net/dmb/css/custom.css" rel="stylesheet" media="screen">
+		
+    
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script>
+			window.jQuery || document.write('<script src="https://dmb.fxdms.net/dmb/js/dist/jquery.min.js"/>')
+		</script>
+		<script src="https://dmb.fxdms.net/dmb/js/dist/utils.min.js"></script>
+		<script src="https://dmb.fxdms.net/dmb/js/dist/angular-combined.min.js"></script>
+		<script src="https://dmb.fxdms.net/dmb/js/dist/bootstrap-combined.min.js"></script>
+		<script src="https://dmb.fxdms.net/dmb/js/dist/dmb-client.min.js"></script>
+		<script src="https://dmb.fxdms.net/dmb/js/apps/conversations/conversationsApp.js"></script>
+		<script src="https://dmb.fxdms.net/dmb/js/apps/external/external.js"></script>
+		<script src="https://dmb.fxdms.net/dmb/js/apps/external/analytics.js"></script>    
+
+<!--
+An element providing a solution to no problem in particular.
+
+Example:
+
+    <proto-element></proto-element>
+
+@demo
+-->
+
+<dom-module id="conversations-list">
+
+  <template>
+  
+    <iron-ajax
+      id="getAuthUser"
+      contentType="application/json"
+      url="/dmbsrv/rest/auth"
+      handle-as="json"
+      on-response="getAuthUserOnResponse"
+      debounce-duration="300">
+    </iron-ajax>
+
+    <iron-ajax
+      id="getConversations"
+      contentType="application/json"
+      url=""
+      handle-as="json"
+      on-response="getConversationsOnResponse"
+      debounce-duration="300">
+    </iron-ajax>
+    
+    <ul>
+    <template is="dom-repeat" items="{{conversations}}">
+      <li on-click="changeSelected" id={{item.formType}} ng-repeat="document in group.documents | filter:search" class="bill" ng-class="{selected: (document.documentId == selectedDocument.documentId), new: document.lastReadDate === undefined}" data-id="{{document.documentId}}" ng-click="selectDocument(this, $event)">
+        <div class="line1">
+          <span class="left">{{item.name}}</span>
+          <span class="right">{{item.issueDate}}</span>
+        </div>
+        <div class="line2">
+          <p class="subject">
+            <span>{{item.description}}</span>
+          </p>
+        </div>
+      </li>
+    </template>
+    </ul>
+
+    <!--
+						<div id="document-list" ng-repeat="group in groups" ng-show="searchForm.searchInput.$dirty || activeFilter!='search'">
+							<div class="list">
+								<div class="section" data-toggle="collapse" data-target="#{{group.label}}" ng-show="group.documents.length > 0 && (isEmpty(query) || query['']==true)" ng-click="collapseGroup($event)">
+									<i class="fa fa-angle-right" ></i> {{group.label}}
+									<div class="badge" ng-show="(group.documents|filter:{overdue:true}).length != 0">
+										{{(group.documents|filter:{overdue:true}).length}} overdue
+									</div>
+								</div>
+								<ul id="{{group.label}}" class="collapse group"  ng-show="(group.documents|filter:search).length > 0 ">
+									<li id="" ng-repeat="document in group.documents | filter:search" class="bill" ng-class="{selected: (document.documentId == selectedDocument.documentId), new: document.lastReadDate === undefined}" data-id="{{document.documentId}}" ng-click="selectDocument(this, $event)">
+										<div class="list-status">
+											<i ng-show="document.lastReadDate === undefined" class="new fa fa-circle"></i>
+										</div>
+										<div class="line1">
+											<span class="left">{{document.name}}</span>
+											<span class="right"> {{document.issueDate | date:'dd/MM/yy'}} </span>
+										</div>
+										<div class="line2">
+											<p class="subject">
+												{{document.description}}
+											</p>
+										</div>
+										<div class="star" ng-class="{stared: document.starred}" ng-click="starDocument(this.document)">
+											<i class="fa fa-star-o"></i>
+										</div>
+									</li>
+
+								</ul>
+							</div>
+
+						</div>
+    -->            
+    
+  </template>
+
+  <script>
+    Polymer({
+      is: "conversations-list",
+      getConversations: function() {
+        console.log("getConversations");
+        this.$.getConversations.url = "/dmbsrv/rest/user/" + this.userProfile.id + "/folder/Conversations/document";
+        this.$.getConversations.generateRequest();
+      },
+      getConversationsOnResponse: function(request) {
+          console.log("getConversationsOnResponse");
+          this.conversations = request.detail.response;
+          
+      },      
+     getAuthUser: function() {
+        console.log("getAuthUser");
+        this.$.getAuthUser.generateRequest();
+        
+      },
+      getAuthUserOnResponse: function(request) {
+          console.log("getAuthUserOnResponse");
+          this.userProfile = request.detail.response;
+          this.getConversations();
+      },      
+      ready: function() {
+        this.getAuthUser();
+        this.selectedTemplate = "bank-fraud";
+      },
+      properties: {
+        selectedTemplate: {
+          type: String,
+          value: "bank-loan-application",
+          notify: true
+          
+        }
+      },
+      changeSelected: function(event, detail, target) {
+        console.log(event.currentTarget.id);
+        if (event.currentTarget.id == "BANK_FRAUD") {
+          this.selectedTemplate = "bank-fraud";
+        }
+        else if(event.currentTarget.id == "BANK_LOAN_APPLICATION") {
+          this.selectedTemplate = "bank-loan-application";
+        }
+        else {
+          this.selectedTemplate = "bpm-coach";
+        }
+      }      
+      
+      
+
+      
+    });
+  </script>
+
+</dom-module>
